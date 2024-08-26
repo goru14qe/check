@@ -177,6 +177,7 @@ void Flow_solver::General_data_input(const std::string& filename, Parallel_MPI* 
 	fluid_constant_viscosity = nu_0 * (global_parameters.D_t / sqr(global_parameters.D_x));
 	double rel_Tau = 0.5 + (3.0 * nu_0  * global_parameters.D_t / sqr(global_parameters.D_x));
 	double Re = global_parameters.D_x * ini_velocity / nu_0; // Reynolds number = rho_0*U_0*L/nu
+	double cal_Pressure = (rho_0 * pow(global_parameters.D_x / global_parameters.D_t,2)) / 3;
 	input_file.close();
 
 	if (MPI_parallel->processor_id == MASTER + 1) {
@@ -189,6 +190,7 @@ void Flow_solver::General_data_input(const std::string& filename, Parallel_MPI* 
 		std::cout << "Background pressure : " << p_th_0 << endl;
 		std::cout << "Relaxation Tau : " << rel_Tau << endl;
 		std::cout << "Reynolds number : " << Re << endl;
+		std::cout << "Calculated Pressure : " << cal_Pressure << endl;
 		std::cout << "====================================================\n";
 		/// std::cout << "Simulation type : " << initial_condition_type << endl;
 	}
@@ -3471,6 +3473,11 @@ void Flow_solver::BC(int time, Thermal_solver* Thermal, Species_solver* Species,
 					yy = fmod(Y - MPI_parallel->start_XYZ2[1] + MPI_parallel->start_XYZ[1] + N_y, N_y);
 					for (Z = 0; Z < MPI_parallel->dev_end[2]; Z++) {
 						zz = fmod(Z - MPI_parallel->start_XYZ2[2] + MPI_parallel->start_XYZ[2] + N_z, N_z);
+						// Use double instead of int to preserve the fractional part
+						double adjusted_x = xx / ((N_x - 1) *global_parameters.D_x);
+						double adjusted_y = yy / ((N_y - 1) *global_parameters.D_x);
+						double adjusted_z = zz / ((N_z - 1) *global_parameters.D_x);
+						
 						u[{X, Y, Z, 0}] = Ini_vel[0] * sin(2. * M_PI * xx / (double)(N_x + 1.)) * cos(2. * M_PI * yy / (double)(N_y + 1.)) * cos(2. * M_PI * zz / (double)(N_z + 1.));
 						u[{X, Y, Z, 1}] = -Ini_vel[1] * cos(2. * M_PI * xx / (double)(N_x + 1.)) * sin(2. * M_PI * yy / (double)(N_y + 1.)) * cos(2. * M_PI * zz / (double)(N_z + 1.));
 						u[{X, Y, Z, 2}] = 0.;
@@ -3521,6 +3528,7 @@ void Flow_solver::BC(int time, Thermal_solver* Thermal, Species_solver* Species,
 			}
 			for (X = 0; X < MPI_parallel->dev_end[0]; X++) {
 				xx = fmod(X - MPI_parallel->start_XYZ2[0] + MPI_parallel->start_XYZ[0] + N_x, N_x);
+				// fmod is used to ensure that the velocity field is periodic in the x direction (i.e. the last point is the same as the first point)
 				for (Y = 0; Y < MPI_parallel->dev_end[1]; Y++) {
 					yy = fmod(Y - MPI_parallel->start_XYZ2[1] + MPI_parallel->start_XYZ[1] + N_y, N_y);
 					for (Z = 0; Z < MPI_parallel->dev_end[2]; Z++) {

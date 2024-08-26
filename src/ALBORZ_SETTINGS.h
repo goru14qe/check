@@ -94,8 +94,8 @@
 /// #if defined REGATH_LIB
 #define Wilke_viscosity
 /// #define Polynomial_viscosity
-#define MixtureAveraged_Species_diffusion
-//#define ConstLewis_Species_diffusion
+//#define MixtureAveraged_Species_diffusion
+#define ConstLewis_Species_diffusion
 //#define UnitLewis_Species_diffusion
 //#define Diffusion_model
 ///#endif

@@ -10,6 +10,7 @@ run_parameters global_parameters;
 int recovery_step;
 int t_num, t_data, t_vtk, t_info, t_time, t_recovery;
 double physical_time_cal;
+double time_limit;
 
 double residual_flow, residual_thermal, residual_species;
 int t_residual;

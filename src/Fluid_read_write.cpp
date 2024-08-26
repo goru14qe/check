@@ -258,6 +258,9 @@ The simulation data is stored in the global parameters structure for use in the 
 */
 void Fluid_read_write::get_sim_data(Geometry* Geo, stl_import* Geo_stl, std::string filename, Parallel_MPI* MPI_parallel) {
 	int column_width = 40;
+	double x_stl, y_stl, z_stl, Lx, Ly, Lz, L0, L, delta, CFL_number;
+	bool is_periodic_x, is_periodic_y, is_periodic_z = false;
+
 	string input_filename(filename);
 	input_filename += ".dat";
 	ifstream input_file;  // File is open for READINGMPI_parallel->num_processors
@@ -284,8 +287,13 @@ void Fluid_read_write::get_sim_data(Geometry* Geo, stl_import* Geo_stl, std::str
 		Geo_stl->flag = 1;
 		Geo->flag = 0;
 		input_file >> Geo_stl->Source_count;
-		input_file >> Geo_stl->units;
-		input_file >> Geo_stl->x_center >> Geo_stl->y_center >> Geo_stl->z_center;
+		// input_file >> Geo_stl->units;
+		find_line_after_comment(input_file);
+		input_file >> is_periodic_x >> is_periodic_y >> is_periodic_z;
+		find_line_after_comment(input_file);
+		input_file >> x_stl >> y_stl >> z_stl >> Lx >> Ly >> Lz >> delta;
+
+		// input_file >> Geo_stl->x_center >> Geo_stl->y_center >> Geo_stl->z_center;
 		find_line_after_comment(input_file);
 		std::string temp;
 		for (int i = 0; i < Geo_stl->Source_count; i++) {
@@ -295,9 +303,54 @@ void Fluid_read_write::get_sim_data(Geometry* Geo, stl_import* Geo_stl, std::str
 	}
 	find_line_after_header(input_file, "c\tGeneral");
 	find_line_after_comment(input_file);
-	double CFL_number;
-	input_file >> global_parameters.D_x >> CFL_number >> ini_velocity >> global_parameters.Nx >> global_parameters.Ny >> global_parameters.Nz;
+	input_file >> CFL_number >> ini_velocity >> global_parameters.Nx >> global_parameters.Ny >> global_parameters.Nz;
+	// input_file >> global_parameters.D_x >> CFL_number >> ini_velocity >> global_parameters.Nx >> global_parameters.Ny >> global_parameters.Nz;
+
+	// CALCULATIONS
+	L0 = 0.001; //1mm
+	L = (2. * M_PI * L0);
+	global_parameters.D_x = 0.0;
+	global_parameters.D_x = L / (global_parameters.Nx - 1);
 	global_parameters.D_t = (CFL_number * global_parameters.D_x) / ini_velocity;
+	double length_domain = global_parameters.D_x * (global_parameters.Nx - 1);
+	// Calculate the number of grid points based on dx and lengths
+	int Nx_full = round(Lx / global_parameters.D_x);
+	int Ny_full = round(Ly / global_parameters.D_x);
+	int Nz_full = round(Lz / global_parameters.D_x);
+	// Initialize mesh box coordinates
+	double xmin_mesh = 0.0; //, xmax_mesh = 0.0;
+	double ymin_mesh = 0.0; //, ymax_mesh = 0.0;
+	double zmin_mesh = 0.0; //, zmax_mesh = 0.0;
+	if (is_periodic_x) {
+		xmin_mesh = x_stl + (Lx - (global_parameters.Nx * global_parameters.D_x)) / 2;
+		//xmax_mesh = xmin_mesh + global_parameters.Nx * global_parameters.D_x;
+	} else {
+		global_parameters.Nx = Nx_full + delta;
+		xmin_mesh = x_stl - ((delta / 2) * global_parameters.D_x);
+		//xmax_mesh = xmin_mesh + global_parameters.Nx * global_parameters.D_x;
+	}
+
+	if (is_periodic_y) {
+		ymin_mesh = y_stl + (Ly - (global_parameters.Ny * global_parameters.D_x)) / 2;
+		//ymax_mesh = ymin_mesh + global_parameters.Ny * global_parameters.D_x;
+	} else {
+		global_parameters.Ny = Ny_full + delta;
+		ymin_mesh = y_stl - ((delta / 2) * global_parameters.D_x);
+		//ymax_mesh = ymin_mesh + global_parameters.Ny * global_parameters.D_x;
+	}
+
+	if (is_periodic_z) {
+		zmin_mesh = z_stl + (Lz - (global_parameters.Nz * global_parameters.D_x)) / 2;
+		//zmax_mesh = zmin_mesh + global_parameters.Nz * global_parameters.D_x;
+	} else {
+		global_parameters.Nz = Nz_full + delta;
+		zmin_mesh = z_stl - ((delta / 2) * global_parameters.D_x);
+		//zmax_mesh = zmin_mesh + global_parameters.Nz * global_parameters.D_x;
+	}
+	Geo_stl->x_center = xmin_mesh;
+	Geo_stl->y_center = ymin_mesh;
+	Geo_stl->z_center = zmin_mesh;
+	//----------------------------------------
 	if (Geo->flag == 1) {
 		global_parameters.Nx = Geo->w;
 		global_parameters.Ny = Geo->h;
@@ -308,7 +361,7 @@ void Fluid_read_write::get_sim_data(Geometry* Geo, stl_import* Geo_stl, std::str
 	input_file >> use_physical_time;
 	if (use_physical_time == 1) {
 		input_file >> physical_time_cal >> t_data >> t_vtk >> t_info >> t_time >> t_recovery >> recovery_step;
-		t_num = static_cast<int>(physical_time_cal / global_parameters.D_t)+10;
+		t_num = static_cast<int>(physical_time_cal / global_parameters.D_t) + 10;
 	} else {
 		input_file >> t_num >> t_data >> t_vtk >> t_info >> t_time >> t_recovery >> recovery_step;
 		physical_time_cal = t_num * global_parameters.D_t;
@@ -322,13 +375,26 @@ void Fluid_read_write::get_sim_data(Geometry* Geo, stl_import* Geo_stl, std::str
 		std::cout << "Simulation Parameters" << endl;
 		std::cout << "=====================" << endl;
 		std::cout << "Input filename :" << left << filename << endl;
+		std::cout << "=====================" << endl;
+		std::cout << "Geometry data" << endl;
+		std::cout << "=====================" << endl;
+		std::cout  << "x_stl = " << x_stl << " y_stl = " << y_stl << " z_stl = " << z_stl << endl
+				  << "Lx = " << Lx << " Ly = " << Ly << " Lz = " << Lz << endl
+				  << "Nx = " << global_parameters.Nx << endl
+				  << "Ny = " << global_parameters.Ny << endl
+				  << "Nz = " << global_parameters.Nz << endl
+				  << "delta on each side = " << delta / 2 << endl
+				  << "x_origin = " << Geo_stl->x_center << " x_end = " << Geo_stl->x_center + Lx << endl
+				  << "y_origin = " << Geo_stl->y_center << " y_end = " << Geo_stl->y_center + Ly << endl
+				  << "z_origin = " << Geo_stl->z_center << " z_end = " << Geo_stl->z_center + Lz << endl;
+		std::cout << "=====================" << endl;
+		std::cout << "General data" << endl;
+		std::cout << "=====================" << endl;
 		std::cout << setw(column_width) << left << "Dx = " << global_parameters.D_x << endl
 				  << setw(column_width) << left << "Dt = " << global_parameters.D_t << endl
+				  << setw(column_width) << left << "L = " << length_domain << endl
 				  << setw(column_width) << left << "CFL number = " << CFL_number << endl
-				  << setw(column_width) << left << "Velocity = " << ini_velocity << endl;
-		std::cout << setw(column_width) << left << "Nx = " << global_parameters.Nx << endl
-				  << setw(column_width) << left << "Ny = " << global_parameters.Ny << endl
-				  << setw(column_width) << left << "Nz = " << global_parameters.Nz << endl
+				  << setw(column_width) << left << "Velocity = " << ini_velocity << endl
 				  << setw(column_width) << left << "=====================" << endl;
 		std::cout << "\nInput and Output parameters" << endl;
 		std::cout << "=====================" << endl;

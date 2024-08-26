@@ -1,0 +1,105 @@
+c	Geometry
+#stl    count
+stl     1
+#is_periodic_x  is_periodic_y   is_periodic_z
+1               1               1
+#x_stl  y_stl   z_stl   Lx  Ly   Lz  delta
+0.1     0.1     1       50  21.8 20  6
+TEST//TGV3D_reaction_species//Flow.stl
+
+c	General
+#CFL     u0     Nx Ny	Nz
+0.005   4.0    64   64  64
+
+c	Parallel Processing
+2	2	1
+
+c	Input-Output Data
+#use_physical_time=1	physical_time(s)	t_data	t_vtk	t_info	t_time	t_recovery	recovery_step
+#1	                    0.0010	            100	    100	    100	    100	    2500	    0
+
+#use_physical_time= 0	t_num	t_data	t_vtk	t_info	t_time	t_recovery	recovery_step
+0                       2       1       1       1       1       2500        0
+
+c	Residual Data
+#t_resi	res_u	res_t	res_spec
+200		1e-9	1e-7	1e-9
+
+c	Flow Field Solver
+#d	q	rho_0		nu_0	F_x	F_y	F_z	p_th	M_av
+3	27	1.0	        1.56e-5	0	0	0	101325	0.02897
+
+c	Temperature Field Solver
+#d	q	E_0		T_0		gbeta	T_ref	E?T?	Gamma
+3	7	1910.7	1910.7		0		0		0.		1.
+
+c	Species Initial Profile File
+#stiffness  flame_pos   ini_temp    fraction_type (X / Y)
+3.0         0.5        300.0           Y
+#    Initial mass fractions (Inlet)
+H2     0.0556      H      0.000000
+O2     0.000000    OH     0.000000
+O      0.000000    H2O    0.000000
+HO2    0.000000    H2O2   0.000000
+N2     0.9443
+#    Mass Fractions (OUTLET)
+H2     0.000000    H      0.000000
+O2     0.233000    OH     0.000000
+O      0.000000    H2O    0.000000
+HO2    0.000000    H2O2   0.000000
+N2     0.767000
+###################################
+
+c	Thermal Initial Profile File
+64	TEST//TGV3D_reaction_species//temperature_64.dat
+
+c	Species Field Solver
+#d	q	Nb_spec	Mref
+3	7	9	0.012370
+#name	Molar Mass  Le
+H2     0.002016 0.3290
+H      0.001008 0.2228
+O2     0.031998 1.2703
+OH     0.017007 0.8279
+O      0.015999 0.8128
+H2O    0.018015 1.0741
+HO2    0.033006 1.2582
+H2O2   0.034014 1.2665
+N2     0.028014 1.8268
+#######################
+#H2     0.002016 1
+#H      0.001008 1
+#O2     0.031998 1
+#OH     0.017007 1
+#O      0.015999 1
+#H2O    0.018015 1
+#HO2    0.033006 1
+#H2O2   0.034014 1
+#N2     0.028014 1
+#############################
+
+c	CANTERA Libraries
+#file   chemistry   transport
+TEST/TGV3D_coldcase/H2_williams_12.yaml h2_williams_12   mixture-averaged
+
+c	Species Diffusion Model
+#constant_Le    constant_Sc constant_Pe
+constant_Le
+
+##############################################
+c	Flow Field Initial Conditions
+#index	type	density	u_x		u_y		u_z
+1		-1		1.0 	4.		4.		4.
+#	solid=1, fluid=-1
+
+c	Flow Field Boundary Conditions
+#number of boundaries for the flow solver
+0
+##############################################
+c	Temperature Field Boundary Conditions
+#number of boundaries for the thermal solver
+0
+##############################################
+c	Species Field Boundary Conditions
+#number of boundaries for the species solver
+0

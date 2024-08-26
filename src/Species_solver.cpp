@@ -3508,8 +3508,6 @@ void TGV3Dreacting_species(Vector_field& Y_k, Vector_field& diffusion_coefficien
 					Thermal->c_p[{X, Y, Z}] = thermo_chemistry->sol->thermo()->cp_mass();
 					Thermal->thermal_diffusion_coefficient[{X, Y, Z}] = thermo_chemistry->sol->transport()->thermalConductivity();
 					solid[{X, Y, Z}] = -1;
-					
-					
 				}
 			}
 		}
@@ -4334,46 +4332,45 @@ void Species_solver::initialize_field_FD_TGV_reactive(Vector_field& Y_k, Vector_
 			for (unsigned int X = 0; X < MPI_parallel->dev_end[0]; ++X) {
 				for (unsigned int Y = 0; Y < MPI_parallel->dev_end[1]; ++Y) {
 					for (unsigned int Z = 0; Z < MPI_parallel->dev_end[2]; ++Z) {
-						solid_species[{X, Y, Z}] = Geo_stl->domain[{X, Y, Z}];
+						solid[{X, Y, Z}] = Geo_stl->domain[{X, Y, Z}];
 						Thermal->solid_thermal_type[{X, Y, Z}] = Geo_stl->domain[{X, Y, Z}];
 					}
 				}
 			}
 		}
 		// Reading initial conditions from the file
-		double stiffness, radius, xflamepos, ini_temp;
-		std::vector<double> massf_in(Nb), massf_out(Nb);  //, diff_co_in(Nb), diff_co_out(Nb);
+		double stiffness, xflamepos, ini_temp, radius;
+		double flamepos, radial_dist, ref_tanh, xx;
+		bool is_reactive = true;
+		std::vector<double> composition_in(Nb), composition_out(Nb);
 		species_name_RG.resize(Nb_spec);
 		std::string input_filename = filename + ".dat";
 		std::ifstream input_file(input_filename.c_str(), std::ios::binary);
 		input_file.seekg(0, std::ios::beg);
 		find_line_after_header(input_file, "c\tSpecies Initial Profile File");
 		find_line_after_comment(input_file);
-		input_file >> stiffness >> radius >> xflamepos >> ini_temp;
+		// Read general parameters and fraction type indicator
+		char fraction_type;
+		input_file >> stiffness >> xflamepos >> ini_temp >> fraction_type;
+		// Load mole fractions or mass fractions
 		find_line_after_comment(input_file);
 		for (unsigned int k = 0; k < Nb_spec; ++k) {
-			input_file >> species_name_RG[k] >> massf_in[k];
+			input_file >> species_name_RG[k] >> composition_in[k];
 		}
 		find_line_after_comment(input_file);
 		for (unsigned int k = 0; k < Nb_spec; ++k) {
-			input_file >> species_name_RG[k] >> massf_out[k];
+			input_file >> species_name_RG[k] >> composition_out[k];
 		}
-		/*find_line_after_comment(input_file);
-		for (unsigned int k = 0; k < Nb_spec; ++k) {
-		    input_file >> species_name_RG[k] >> diff_co_in[k];
-		}
-		find_line_after_comment(input_file);
-		for (unsigned int k = 0; k < Nb_spec; ++k) {
-		    input_file >> species_name_RG[k] >> diff_co_out[k];
-		}*/
 		input_file.close();
 		// Initialize fields based on the imported data
 		for (unsigned int X = 0; X < MPI_parallel->dev_end[0]; ++X) {
-			double xx = fmod(X - MPI_parallel->start_XYZ2[0] + MPI_parallel->start_XYZ[0] + global_parameters.Nx, global_parameters.Nx);
-			double stiffness2 = 100 * stiffness / global_parameters.Nx;
-			double flamepos = xflamepos * global_parameters.Nx;
-			double radial_dist = sqrt(pow(xx - flamepos, 2));
-			double ref_tanh = 0.5 * (1.0 + tanh(stiffness2 * (radial_dist - radius) / radius));
+			xx = fmod(X - MPI_parallel->start_XYZ2[0] + MPI_parallel->start_XYZ[0] + global_parameters.Nx, global_parameters.Nx) * global_parameters.D_x;
+			
+			flamepos = xflamepos * global_parameters.Nx * global_parameters.D_x;
+			radius = global_parameters.Nx * global_parameters.D_x / 8.0;
+			radial_dist = fabs(xx - flamepos);
+			ref_tanh = 0.5 * (1.0 + tanh(stiffness * (radial_dist - radius) / radius));
+
 			for (unsigned int Y = 0; Y < MPI_parallel->dev_end[1]; ++Y) {
 				for (unsigned int Z = 0; Z < MPI_parallel->dev_end[2]; ++Z) {
 					solid_species[{X, Y, Z}] = -1;  // Mark as solid
@@ -4381,7 +4378,7 @@ void Species_solver::initialize_field_FD_TGV_reactive(Vector_field& Y_k, Vector_
 					double test_one = 0.0;
 					// Calculate and normalize mass fractions
 					for (unsigned int j = 0; j < Nb; ++j) {
-						Y_k[{X, Y, Z, j}] = massf_in[j] * (1.0 - ref_tanh) + massf_out[j] * ref_tanh;  // eq: Yk = Yk1*(1-tanh) + Yk2*tanh
+						Y_k[{X, Y, Z, j}] = composition_in[j] * (1.0 - ref_tanh) + composition_out[j] * ref_tanh;
 						test_one += Y_k[{X, Y, Z, j}];
 						diffusion_coefficient[{X, Y, Z, j}] = 1e-5;
 					}
@@ -4408,7 +4405,6 @@ void Species_solver::initialize_field_FD_TGV_reactive(Vector_field& Y_k, Vector_
 					Thermal->c_p[{X, Y, Z}] = thermo_chemistry->sol->thermo()->cp_mass();
 					Thermal->thermal_diffusion_coefficient[{X, Y, Z}] = thermo_chemistry->sol->transport()->thermalConductivity();
 					solid[{X, Y, Z}] = -1;
-					//--------------------------------------------------------------------------------------------------------------------
 					V_c[{X, Y, Z, 0}] = 0;
 					V_c[{X, Y, Z, 1}] = 0;
 					V_c[{X, Y, Z, 2}] = 0;
@@ -4419,7 +4415,7 @@ void Species_solver::initialize_field_FD_TGV_reactive(Vector_field& Y_k, Vector_
 						Flux[X][Y][Z][k][2] = 0.;
 						previous_mass_fraction[{X, Y, Z, k}] = Y_k[{X, Y, Z, k}];
 					}
-					molar_mass_av[{X, Y, Z}] = 1.0 / molar_mass_av[{X, Y, Z}]; // right now the unit of mm_av is kg/mol and we need it in mol/kg for the solver
+					molar_mass_av[{X, Y, Z}] = 1.0 / molar_mass_av[{X, Y, Z}];  // right now the unit of mm_av is kg/mol and we need it in mol/kg for the solver
 				}
 			}
 		}
@@ -4428,11 +4424,10 @@ void Species_solver::initialize_field_FD_TGV_reactive(Vector_field& Y_k, Vector_
 			std::cout << "================================ \n";
 			std::cout << "Stiffness: " << stiffness << std::endl;
 			std::cout << "Radius: " << radius << std::endl;
-			std::cout << "Flame Position: " << xflamepos << std::endl;
+			std::cout << "Flame Position: " << xflamepos << " which is: " << flamepos << " m " << std::endl;
 			std::cout << "Initial Temperature: " << ini_temp << std::endl;
 			std::cout << "The equation used for the initial profile is: Yk = Yk1*(1-tanh) + Yk2*tanh \n";
 			std::cout << "Where tanh = 0.5 * (1 + tanh(stiffness2 * (radial_dist - radius) / radius)) \n";
-			std::cout << "Radius is the radius of the flame : Pi/4\n";
 			std::cout << "================================ \n";
 		}
 	}

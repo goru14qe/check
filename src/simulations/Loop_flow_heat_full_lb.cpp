@@ -79,7 +79,8 @@ void Loop_flow_heat_full_lb::step(int tm) {
 
 	if (tm % 100 == 0) {
 		check_L2_residual(flow_field.velocity_magnitude, flow_field.previous_velocity_magnitude, flow_field.is_solid, fluid_read_write.residual_flow, parallel_MPI, tm, "velocity_magnitude");
-		
+		fluid_read_write.AverageKineticEnergy(&flow_field, &parallel_MPI, tm);
+		fluid_read_write.AverageEnstrophy(&flow_field, &parallel_MPI, tm);
 	}
 }
 

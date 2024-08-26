@@ -20,10 +20,11 @@ extern int recovery_step;
 
 extern int t_num;   // number of time steps (running from 1 to t_num)
 extern int t_data;  // disk write time step (data will be written to the disk every t_data step)
-extern int t_vtk;   // VTK write time step
-extern int t_info;  // info time step (screen message will be printed every t_info step)
+extern int t_vtk;   // VTK write time step (data will be written to the disk every t_vtk step)
+extern int t_info;  // info time step (screen message will be printed every t_info steps)
 extern int t_time;  // Report elapsed time on screen
-extern int t_recovery;
+extern int t_recovery; // recovery save frequency in time step
+extern double time_limit; // time [s] after which the simulation is stopped and a recovery state is saved; config value expects [min]
 extern double physical_time_cal;
 extern int t_residual;
 extern double residual_flow;

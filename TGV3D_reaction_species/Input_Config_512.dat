@@ -1,0 +1,85 @@
+c	Geometry
+stl	1	1.23e-05 1.22	1.21    1.2
+TEST//TGV3D_reaction_species//Flow.stl
+
+c	General
+#Dx			Dt			Nx	Ny	Nz
+1.23e-05	1.23e-08	512	512	5
+
+c	Parallel Processing
+2	2	1
+
+c	Input-Output Data
+#t_num	t_data	t_vtk	t_info	t_time	t_recovery	t_start
+100		10		10		10		10		1000			0
+#108438	100	15491	100	100	 250000		0
+
+c	Residual Data
+#t_resi	res_u	res_t	res_spec
+200		1e-9	1e-7	1e-9
+
+c	Flow Field Solver
+#d	q	rho_0	nu_0	F_x	F_y	F_z	p_th	M_av
+3	27	1.0		.56e-5	0	0	0	101325	0.02897
+
+c	Temperature Field Solver
+#d	q	E_0		T_0		gbeta	T_ref	E?T?	Gamma
+3	7	1910.7	1910.7	0		0		0.		1.
+
+c	Temperature Field Initial Conditions        (# outside=1, in domain=-1)
+#index	type	temperature		cp		lamda
+1		-1		2200			1435.69	0.1417
+
+
+c	Species Initial Profile File
+512	TEST//TGV3D_reaction_species//species_512.dat
+
+c	Thermal Initial Profile File
+512	TEST//TGV3D_reaction_species//temperature_512.dat
+
+c	Species Field Solver
+#d	q	Nb_spec	Mref
+3	7	9	0.012370
+#name	Molar Mass  Le
+H2     0.002016 0.3290
+H      0.001008 0.2228
+O2     0.031998 1.2703
+OH     0.017007 0.8279
+O      0.015999 0.8128
+H2O    0.018015 1.0741
+HO2    0.033006 1.2582
+H2O2   0.034014 1.2665
+N2     0.028014 1.8268
+#######################
+#H2     0.002016 1
+#H      0.001008 1
+#O2     0.031998 1
+#OH     0.017007 1
+#O      0.015999 1
+#H2O    0.018015 1
+#HO2    0.033006 1
+#H2O2   0.034014 1
+#N2     0.028014 1
+#############################
+
+c	CANTERA Libraries
+#file   chemistry   transport
+TEST/TGV3D_reaction_species/H2_williams_12.yaml h2_williams_12   mixture-averaged
+
+##############################################
+c	Flow Field Initial Conditions
+#index	type	density	u_x	u_y	u_z
+1		-1		1.0 	4.	4.	4.
+#	solid=1, fluid=-1
+
+c	Flow Field Boundary Conditions
+#number of boundaries for the flow solver
+0
+##############################################
+c	Temperature Field Boundary Conditions
+#number of boundaries for the thermal solver
+0
+##############################################
+c	Species Field Boundary Conditions
+#number of boundaries for the species solver
+0
