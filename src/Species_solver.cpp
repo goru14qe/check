@@ -405,7 +405,7 @@ void Species_solver::Memory_allocation(Stencil_Definition Stencil_Def, Parallel_
 
 	molar_mass_av = Scalar_field::zeros(scalar_sizes);
 	mass_fraction = Vector_field::zeros(vec_sizes);
-	
+
 	temp_T_eq = Scalar_field::zeros(scalar_sizes);
 	temp_cp_eq = Scalar_field::zeros(scalar_sizes);
 	temp_diffusion_coefficient_eq = Scalar_field::zeros(scalar_sizes);
@@ -524,44 +524,44 @@ void Species_solver::Memory_allocation_FD(Stencil_Definition Stencil_Def, Parall
 /// GEOMETRY                                              ///
 /// ***************************************************** ///
 void Species_solver::initialize_field(Geometry* Geo, stl_import* Geo_stl, Species_Ini Ini_Spec, Flow_solver* Flow, Parallel_MPI* MPI_parallel, const std::string& filename) {
-    unsigned int X, Y, Z, k;
-    COMP = 0;
-    if (MPI_parallel->processor_id != MASTER) {
-        if (Geo_stl->flag == 1) {
-            for (X = 0; X < MPI_parallel->dev_end[0]; X++) {
-                for (Y = 0; Y < MPI_parallel->dev_end[1]; Y++) {
-                    for (Z = 0; Z < MPI_parallel->dev_end[2]; Z++) {
-                        solid_species[{X, Y, Z}] = Geo_stl->domain[{X, Y, Z}];
-                    }
-                }
-            }
-        }
+	unsigned int X, Y, Z, k;
+	COMP = 0;
+	if (MPI_parallel->processor_id != MASTER) {
+		if (Geo_stl->flag == 1) {
+			for (X = 0; X < MPI_parallel->dev_end[0]; X++) {
+				for (Y = 0; Y < MPI_parallel->dev_end[1]; Y++) {
+					for (Z = 0; Z < MPI_parallel->dev_end[2]; Z++) {
+						solid_species[{X, Y, Z}] = Geo_stl->domain[{X, Y, Z}];
+					}
+				}
+			}
+		}
 
 		Ini_Spec(mass_fraction, diffusion_coefficient, solid_species, species_name_RG, global_parameters.Nx,
 		         global_parameters.Ny, global_parameters.Nz, Nb_spec, c_s2,
 		         filename, Geo_stl->Source_count, MPI_parallel);
-        /// -------------------------------------------------------------------------------------------
-        for (X = 0; X < MPI_parallel->dev_end[0]; ++X) {
-            for (Y = 0; Y < MPI_parallel->dev_end[1]; ++Y) {
-                for (Z = 0; Z < MPI_parallel->dev_end[2]; ++Z) {
-                    V_c[{X, Y, Z, 0}] = 0;
-                    V_c[{X, Y, Z, 1}] = 0;
-                    V_c[{X, Y, Z, 2}] = 0;
-                    molar_mass_av[{X, Y, Z}] = 0;
-                    for (k = 0; k < Nb_spec; ++k) {
-                        molar_mass_av[{X, Y, Z}] += mass_fraction[{X, Y, Z, k}] / Molar_mass[k];
-                        Production[{X, Y, Z, k}] = 0.;
-                        Flux[X][Y][Z][k][0] = 0.;
-                        Flux[X][Y][Z][k][1] = 0.;
-                        Flux[X][Y][Z][k][2] = 0.;
-                        previous_mass_fraction[{X, Y, Z, k}] = mass_fraction[{X, Y, Z, k}];
-                    }
-                    molar_mass_av[{X, Y, Z}] = 1. / molar_mass_av[{X, Y, Z}];
-                }
-            }
-        }
-    }
-    return;
+		/// -------------------------------------------------------------------------------------------
+		for (X = 0; X < MPI_parallel->dev_end[0]; ++X) {
+			for (Y = 0; Y < MPI_parallel->dev_end[1]; ++Y) {
+				for (Z = 0; Z < MPI_parallel->dev_end[2]; ++Z) {
+					V_c[{X, Y, Z, 0}] = 0;
+					V_c[{X, Y, Z, 1}] = 0;
+					V_c[{X, Y, Z, 2}] = 0;
+					molar_mass_av[{X, Y, Z}] = 0;
+					for (k = 0; k < Nb_spec; ++k) {
+						molar_mass_av[{X, Y, Z}] += mass_fraction[{X, Y, Z, k}] / Molar_mass[k];
+						Production[{X, Y, Z, k}] = 0.;
+						Flux[X][Y][Z][k][0] = 0.;
+						Flux[X][Y][Z][k][1] = 0.;
+						Flux[X][Y][Z][k][2] = 0.;
+						previous_mass_fraction[{X, Y, Z, k}] = mass_fraction[{X, Y, Z, k}];
+					}
+					molar_mass_av[{X, Y, Z}] = 1. / molar_mass_av[{X, Y, Z}];
+				}
+			}
+		}
+	}
+	return;
 }
 /// ***************************************************** ///
 /// INITIALIZE FIELD VARIABLES, MASS FRACTION AND         ///
@@ -3266,174 +3266,174 @@ double Species_solver::Fo_monitor(Flow_solver* Flow, Parallel_MPI* MPI_parallel,
 /// FILE)                                                 ///
 /// ***************************************************** ///
 void Inline_User_Defined(Vector_field& Y_k, Vector_field& diffusion_coefficient, Solid_field& solid, const std::vector<std::string>& species_names, double N_x, double N_y, double N_z, double Nb_spec, double c_s2, const std::string& filename, int Zones, Parallel_MPI* MPI_parallel) {
-    if (MPI_parallel->is_master()) {
-        return;
-    }
-    const std::vector<double> initial_vec(Nb_spec, 0.0);
-    std::vector<int> type(Zones + 1, 0);
-    Ini_s.resize(Zones + 1, initial_vec);
-    Ini_D.resize(Zones + 1, initial_vec);
-    type[0] = 1;  /// -----> Solids are set to +1
-    std::vector<Initial_field_slice> special_volumes;
+	if (MPI_parallel->is_master()) {
+		return;
+	}
+	const std::vector<double> initial_vec(Nb_spec, 0.0);
+	std::vector<int> type(Zones + 1, 0);
+	Ini_s.resize(Zones + 1, initial_vec);
+	Ini_D.resize(Zones + 1, initial_vec);
+	type[0] = 1;  /// -----> Solids are set to +1
+	std::vector<Initial_field_slice> special_volumes;
 
-    /// Open input file
-    ifstream input_file_s(filename + ".dat", ios::binary);
-    find_line_after_header(input_file_s, "c\tSpecies Field Initial Conditions");
-    if (MPI_parallel->processor_id == (MASTER + 1)) {
-        std::cout << "SPECIES: User defined Initial conditions \n";
-        std::cout << "================================ \n";
-    }
-    for (unsigned i = 0; i < Zones; i++) {
-        int counter_species;
-        std::vector<int> index_nonzero;
-        std::string species_names_temp;
-        find_line_after_comment(input_file_s);
-        int index;
-        bool is_extra = false;
-        input_file_s >> index;
+	/// Open input file
+	ifstream input_file_s(filename + ".dat", ios::binary);
+	find_line_after_header(input_file_s, "c\tSpecies Field Initial Conditions");
+	if (MPI_parallel->processor_id == (MASTER + 1)) {
+		std::cout << "SPECIES: User defined Initial conditions \n";
+		std::cout << "================================ \n";
+	}
+	for (unsigned i = 0; i < Zones; i++) {
+		int counter_species;
+		std::vector<int> index_nonzero;
+		std::string species_names_temp;
+		find_line_after_comment(input_file_s);
+		int index;
+		bool is_extra = false;
+		input_file_s >> index;
 
-        if (index < 0) {
-            is_extra = true;
-            index = Ini_s.size();
-            Ini_s.push_back(initial_vec);
-            Ini_D.push_back(initial_vec);
-            type.push_back(0);
-            --i;
-        }
-        input_file_s >> type[index];
-        input_file_s >> counter_species;
-        find_line_after_comment(input_file_s);
-        for (unsigned j = 0; j < counter_species; j++) {
-            input_file_s >> species_names_temp;
-            auto it = std::find(species_names.begin(), species_names.end(), species_names_temp);
-            if (it != species_names.end()) {
-                const int k = std::distance(species_names.begin(), it);
-                input_file_s >> Ini_s[index][k];
-                index_nonzero.push_back(k);
-            } else {
-                ERROR_ABORT("[Error] Unknown Species \"" << species_names_temp << "\" "
-                                                         << " in initial conditions.");
-            }
-        }
+		if (index < 0) {
+			is_extra = true;
+			index = Ini_s.size();
+			Ini_s.push_back(initial_vec);
+			Ini_D.push_back(initial_vec);
+			type.push_back(0);
+			--i;
+		}
+		input_file_s >> type[index];
+		input_file_s >> counter_species;
+		find_line_after_comment(input_file_s);
+		for (unsigned j = 0; j < counter_species; j++) {
+			input_file_s >> species_names_temp;
+			auto it = std::find(species_names.begin(), species_names.end(), species_names_temp);
+			if (it != species_names.end()) {
+				const int k = std::distance(species_names.begin(), it);
+				input_file_s >> Ini_s[index][k];
+				index_nonzero.push_back(k);
+			} else {
+				ERROR_ABORT("[Error] Unknown Species \"" << species_names_temp << "\" "
+				                                         << " in initial conditions.");
+			}
+		}
 
-        find_line_after_comment(input_file_s);
-        for (unsigned j = 0; j < counter_species; j++) {
-            input_file_s >> species_names_temp;
-            auto it = std::find(species_names.begin(), species_names.end(), species_names_temp);
-            if (it != species_names.end()) {
-                const int k = std::distance(species_names.begin(), it);
-                input_file_s >> Ini_D[index][k];
-                Ini_D[index][k] = (global_parameters.D_t * Ini_D[index][k] / (global_parameters.D_x * global_parameters.D_x));
-            } else {
-                ERROR_ABORT("[Error] Unknown Species \"" << species_names_temp << "\" "
-                                                         << " in initial conditions.");
-            }
-        }
+		find_line_after_comment(input_file_s);
+		for (unsigned j = 0; j < counter_species; j++) {
+			input_file_s >> species_names_temp;
+			auto it = std::find(species_names.begin(), species_names.end(), species_names_temp);
+			if (it != species_names.end()) {
+				const int k = std::distance(species_names.begin(), it);
+				input_file_s >> Ini_D[index][k];
+				Ini_D[index][k] = (global_parameters.D_t * Ini_D[index][k] / (global_parameters.D_x * global_parameters.D_x));
+			} else {
+				ERROR_ABORT("[Error] Unknown Species \"" << species_names_temp << "\" "
+				                                         << " in initial conditions.");
+			}
+		}
 
-        if (is_extra) {
-            special_volumes.push_back({});
-            Initial_field_slice& slice = special_volumes.back();
-            slice.index = index;
-        }
+		if (is_extra) {
+			special_volumes.push_back({});
+			Initial_field_slice& slice = special_volumes.back();
+			slice.index = index;
+		}
 
-        if (MPI_parallel->processor_id == (MASTER + 1)) {
-            std::cout << "Zone : " << index << "\t Type : " << type[index] << std::endl;
-            std::cout << "Initial non-zero mass fraction : " << std::endl;
-            for (int k = 0; k < counter_species; ++k) {
-                std::cout << species_names[index_nonzero[k]] << " " << Ini_s[index][index_nonzero[k]] << "\t";
-                if ((k + 1) % 6 == 0) std::cout << "\n";
-            }
-            std::cout << endl;
-            std::cout << "Tau_s : " << std::endl;
-            for (int k = 0; k < counter_species; ++k) {
-                std::cout << species_names[index_nonzero[k]] << " " << Ini_D[index][index_nonzero[k]] << "\t";
-                if ((k + 1) % 6 == 0) std::cout << "\n";
-            }
-            std::cout << endl;
-        }
-    }
-    input_file_s.close();
-    for (unsigned X = 0; X < MPI_parallel->dev_end[0]; X++) {
-        for (unsigned Y = 0; Y < MPI_parallel->dev_end[1]; Y++) {
-            for (unsigned Z = 0; Z < MPI_parallel->dev_end[2]; Z++) {
-                for (int k = 0; k < Nb_spec; k++) {
-                    diffusion_coefficient[{X, Y, Z, k}] = Ini_D[solid[{X, Y, Z}]][k];
-                    Y_k[{X, Y, Z, k}] = Ini_s[solid[{X, Y, Z}]][k];
-                }
-                solid[{X, Y, Z}] = type[solid[{X, Y, Z}]];
-            }
-        }
-    }
+		if (MPI_parallel->processor_id == (MASTER + 1)) {
+			std::cout << "Zone : " << index << "\t Type : " << type[index] << std::endl;
+			std::cout << "Initial non-zero mass fraction : " << std::endl;
+			for (int k = 0; k < counter_species; ++k) {
+				std::cout << species_names[index_nonzero[k]] << " " << Ini_s[index][index_nonzero[k]] << "\t";
+				if ((k + 1) % 6 == 0) std::cout << "\n";
+			}
+			std::cout << endl;
+			std::cout << "Tau_s : " << std::endl;
+			for (int k = 0; k < counter_species; ++k) {
+				std::cout << species_names[index_nonzero[k]] << " " << Ini_D[index][index_nonzero[k]] << "\t";
+				if ((k + 1) % 6 == 0) std::cout << "\n";
+			}
+			std::cout << endl;
+		}
+	}
+	input_file_s.close();
+	for (unsigned X = 0; X < MPI_parallel->dev_end[0]; X++) {
+		for (unsigned Y = 0; Y < MPI_parallel->dev_end[1]; Y++) {
+			for (unsigned Z = 0; Z < MPI_parallel->dev_end[2]; Z++) {
+				for (int k = 0; k < Nb_spec; k++) {
+					diffusion_coefficient[{X, Y, Z, k}] = Ini_D[solid[{X, Y, Z}]][k];
+					Y_k[{X, Y, Z, k}] = Ini_s[solid[{X, Y, Z}]][k];
+				}
+				solid[{X, Y, Z}] = type[solid[{X, Y, Z}]];
+			}
+		}
+	}
 }
 /// ***************************************************** ///
 /// INITIAL CONDITIONS: 3-D COMPRESSIBLE TAYLOR-GREEN     ///
 /// (INPUT FATA FILE NEEDED) VORTEX                       ///
 /// ***************************************************** ///
 void TGV3Dcold_species(Vector_field& Y_k, Vector_field& diffusion_coefficient, Solid_field& solid, const std::vector<std::string>& species_names, double N_x, double N_y, double N_z, double Nb_spec, double c_s2, const std::string& filename, int Zones, Parallel_MPI* MPI_parallel) {
-    std::string file_address;
-    int N_grid;
+	std::string file_address;
+	int N_grid;
 
-    if (MPI_parallel->processor_id != MASTER) {
-        unsigned int X, Y, Z, k, i, Nb;
-        double xx;
-        Nb = Nb_spec;
+	if (MPI_parallel->processor_id != MASTER) {
+		unsigned int X, Y, Z, k, i, Nb;
+		double xx;
+		Nb = Nb_spec;
 
-        // Initialize arrays to read data from file
-        std::vector<std::vector<double>> Y_initial(Nb_spec);
-        std::vector<double> x_initial;
+		// Initialize arrays to read data from file
+		std::vector<std::vector<double>> Y_initial(Nb_spec);
+		std::vector<double> x_initial;
 
-        // Read the file address from the header file
-        std::ifstream input_file(filename + ".dat", std::ios::binary);
-        find_line_after_header(input_file, "c\tSpecies Initial Profile File");
-        input_file >> N_grid >> file_address;
-        input_file.close();
+		// Read the file address from the header file
+		std::ifstream input_file(filename + ".dat", std::ios::binary);
+		find_line_after_header(input_file, "c\tSpecies Initial Profile File");
+		input_file >> N_grid >> file_address;
+		input_file.close();
 
-        // Read data from the extracted filename
-        std::ifstream data_file(file_address, std::ios::in | std::ios::binary);
-        x_initial.resize(N_grid);
-        for (k = 0; k < Nb_spec; ++k) {
-            Y_initial[k].resize(N_grid);
-        }
-        for (X = 0; X < N_grid; ++X) {
-            data_file >> x_initial[X];
-            x_initial[X] *= 0.01;
-            for (k = 0; k < Nb_spec; ++k) {
-                data_file >> Y_initial[k][X];
-            }
-        }
-        data_file.close();
+		// Read data from the extracted filename
+		std::ifstream data_file(file_address, std::ios::in | std::ios::binary);
+		x_initial.resize(N_grid);
+		for (k = 0; k < Nb_spec; ++k) {
+			Y_initial[k].resize(N_grid);
+		}
+		for (X = 0; X < N_grid; ++X) {
+			data_file >> x_initial[X];
+			x_initial[X] *= 0.01;
+			for (k = 0; k < Nb_spec; ++k) {
+				data_file >> Y_initial[k][X];
+			}
+		}
+		data_file.close();
 
-        // Process the data
-        for (X = 0; X < MPI_parallel->dev_end[0]; ++X) {
-            xx = fmod(X - MPI_parallel->start_XYZ2[0] + MPI_parallel->start_XYZ[0] + N_x, N_x) * global_parameters.D_x;
+		// Process the data
+		for (X = 0; X < MPI_parallel->dev_end[0]; ++X) {
+			xx = fmod(X - MPI_parallel->start_XYZ2[0] + MPI_parallel->start_XYZ[0] + N_x, N_x) * global_parameters.D_x;
 
-            unsigned index = 0;
-            for (i = 0; i < x_initial.size() - 1; ++i) {
-                if (xx > x_initial[i] && xx <= x_initial[i + 1]) {
-                    index = i;
-                    break;
-                }
-            }
+			unsigned index = 0;
+			for (i = 0; i < x_initial.size() - 1; ++i) {
+				if (xx > x_initial[i] && xx <= x_initial[i + 1]) {
+					index = i;
+					break;
+				}
+			}
 
-            for (Y = 0; Y < MPI_parallel->dev_end[1]; ++Y) {
-                for (Z = 0; Z < MPI_parallel->dev_end[2]; ++Z) {
-                    solid[{X, Y, Z}] = -1;
-                    for (k = 0; k < Nb; ++k) {
-                        diffusion_coefficient[{X, Y, Z, k}] = 1e-5;
-                        Y_k[{X, Y, Z, k}] = Y_initial[k][index] + (xx - x_initial[index]) * (Y_initial[k][index + 1] - Y_initial[k][index]) / (x_initial[index + 1] - x_initial[index]);
-                    }
-                }
-            }
-        }
+			for (Y = 0; Y < MPI_parallel->dev_end[1]; ++Y) {
+				for (Z = 0; Z < MPI_parallel->dev_end[2]; ++Z) {
+					solid[{X, Y, Z}] = -1;
+					for (k = 0; k < Nb; ++k) {
+						diffusion_coefficient[{X, Y, Z, k}] = 1e-5;
+						Y_k[{X, Y, Z, k}] = Y_initial[k][index] + (xx - x_initial[index]) * (Y_initial[k][index + 1] - Y_initial[k][index]) / (x_initial[index + 1] - x_initial[index]);
+					}
+				}
+			}
+		}
 
-        if (MPI_parallel->processor_id == (MASTER + 1)) {
-            std::cout << "SPECIES: non-reacting TGV-3D initial conditions \n";
-            std::cout << "================================ \n";
-            std::cout << "Species file address: " << file_address << std::endl;
-            std::cout << "N_grid: " << N_grid << std::endl;
-            std::cout << "================================ \n";
-        }
-    }
+		if (MPI_parallel->processor_id == (MASTER + 1)) {
+			std::cout << "SPECIES: non-reacting TGV-3D initial conditions \n";
+			std::cout << "================================ \n";
+			std::cout << "Species file address: " << file_address << std::endl;
+			std::cout << "N_grid: " << N_grid << std::endl;
+			std::cout << "================================ \n";
+		}
+	}
 }
 /// ***************************************************** ///
 /// INITIAL CONDITIONS: 3-D REACTING TAYLOR-GREEN         ///
@@ -3527,46 +3527,46 @@ void TGV3Dreacting_species(Vector_field& Y_k, Vector_field& diffusion_coefficien
 /// INITIAL CONDITIONS: GAUSSIAN HILL                     ///
 /// ***************************************************** ///
 void Gaussian_species(Vector_field& Y_k, Vector_field& diffusion_coefficient, Solid_field& solid, const std::vector<std::string>& species_names, double N_x, double N_y, double N_z, double Nb_spec, double c_s2, const std::string& filename, int Zones, Parallel_MPI* MPI_parallel) {
-    ///----------------------------------------------------------------------///
-    ///                        COMMAND LINE INPUT                            ///
-    ///----------------------------------------------------------------------///
-    if (MPI_parallel->processor_id != MASTER) {
-        if (MPI_parallel->processor_id == (MASTER + 1)) {
-            std::cout << "SPECIES: Gaussian Hill conditions \n";
-            std::cout << "================================= \n";
-        }
-        /// Open input file
-        ifstream input_file(filename + ".dat", ios::binary);
-        find_line_after_header(input_file, "c\tSpecies Field Gaussian Initial Conditions");
-        find_line_after_comment(input_file);
-        double dim, sigma0, x_0, y_0, z_0, Ini_D;
-        input_file >> dim >> sigma0 >> x_0 >> y_0 >> z_0 >> Ini_D;
-        input_file.close();
+	///----------------------------------------------------------------------///
+	///                        COMMAND LINE INPUT                            ///
+	///----------------------------------------------------------------------///
+	if (MPI_parallel->processor_id != MASTER) {
+		if (MPI_parallel->processor_id == (MASTER + 1)) {
+			std::cout << "SPECIES: Gaussian Hill conditions \n";
+			std::cout << "================================= \n";
+		}
+		/// Open input file
+		ifstream input_file(filename + ".dat", ios::binary);
+		find_line_after_header(input_file, "c\tSpecies Field Gaussian Initial Conditions");
+		find_line_after_comment(input_file);
+		double dim, sigma0, x_0, y_0, z_0, Ini_D;
+		input_file >> dim >> sigma0 >> x_0 >> y_0 >> z_0 >> Ini_D;
+		input_file.close();
 
-        Ini_D = Ini_D * (global_parameters.D_t / sqr(global_parameters.D_x));
+		Ini_D = Ini_D * (global_parameters.D_t / sqr(global_parameters.D_x));
 
-        if (MPI_parallel->processor_id == (MASTER + 1)) {
-            std::cout << "D : " << dim << "\t Sigma : " << sigma0 << "\n"
-                      << "x0 : " << x_0 << "\t y0 : "
-                      << "\t z0 : " << z_0 << "\n"
-                      << "Diffusion coefficient: " << Ini_D << std::endl;
-        }
+		if (MPI_parallel->processor_id == (MASTER + 1)) {
+			std::cout << "D : " << dim << "\t Sigma : " << sigma0 << "\n"
+					  << "x0 : " << x_0 << "\t y0 : "
+					  << "\t z0 : " << z_0 << "\n"
+					  << "Diffusion coefficient: " << Ini_D << std::endl;
+		}
 
-        for (int X = 0; X < MPI_parallel->dev_end[0]; X++) {
-            double xx = fmod(X - MPI_parallel->start_XYZ2[0] + MPI_parallel->start_XYZ[0] + N_x, N_x) * global_parameters.D_x;
-            for (int Y = 0; Y < MPI_parallel->dev_end[1]; Y++) {
-                double yy = fmod(Y - MPI_parallel->start_XYZ2[1] + MPI_parallel->start_XYZ[1] + N_y, N_y) * global_parameters.D_x;
-                for (int Z = 0; Z < MPI_parallel->dev_end[2]; Z++) {
-                    // double zz = fmod(Z - MPI_parallel->start_XYZ2[2] + MPI_parallel->start_XYZ[2] + N_z, N_z) * global_parameters.D_x;
-                    diffusion_coefficient[{X, Y, Z, 0}] = Ini_D;
-                    double distance = sqr(xx - x_0) + sqr(yy - y_0);
-                    if (dim > 2) distance += sqr(yy - z_0);
-                    Y_k[{X, Y, Z, 0}] = std::exp(-0.5 * distance / sqr(sigma0));
-                    solid[{X, Y, Z}] = -1;
-                }
-            }
-        }
-    }
+		for (int X = 0; X < MPI_parallel->dev_end[0]; X++) {
+			double xx = fmod(X - MPI_parallel->start_XYZ2[0] + MPI_parallel->start_XYZ[0] + N_x, N_x) * global_parameters.D_x;
+			for (int Y = 0; Y < MPI_parallel->dev_end[1]; Y++) {
+				double yy = fmod(Y - MPI_parallel->start_XYZ2[1] + MPI_parallel->start_XYZ[1] + N_y, N_y) * global_parameters.D_x;
+				for (int Z = 0; Z < MPI_parallel->dev_end[2]; Z++) {
+					// double zz = fmod(Z - MPI_parallel->start_XYZ2[2] + MPI_parallel->start_XYZ[2] + N_z, N_z) * global_parameters.D_x;
+					diffusion_coefficient[{X, Y, Z, 0}] = Ini_D;
+					double distance = sqr(xx - x_0) + sqr(yy - y_0);
+					if (dim > 2) distance += sqr(yy - z_0);
+					Y_k[{X, Y, Z, 0}] = std::exp(-0.5 * distance / sqr(sigma0));
+					solid[{X, Y, Z}] = -1;
+				}
+			}
+		}
+	}
 }
 /// ***************************************************** ///
 /// GET THERMAL DIFFUSION USING SUTHERLAND MODEL          ///
@@ -4341,7 +4341,7 @@ void Species_solver::initialize_field_FD_TGV_reactive(Vector_field& Y_k, Vector_
 		// Reading initial conditions from the file
 		double stiffness, xflamepos, ini_temp, radius;
 		double flamepos, radial_dist, ref_tanh, xx;
-		bool is_reactive = true;
+		bool is_reactive = false;
 		std::vector<double> composition_in(Nb), composition_out(Nb);
 		species_name_RG.resize(Nb_spec);
 		std::string input_filename = filename + ".dat";
@@ -4365,45 +4365,104 @@ void Species_solver::initialize_field_FD_TGV_reactive(Vector_field& Y_k, Vector_
 		// Initialize fields based on the imported data
 		for (unsigned int X = 0; X < MPI_parallel->dev_end[0]; ++X) {
 			xx = fmod(X - MPI_parallel->start_XYZ2[0] + MPI_parallel->start_XYZ[0] + global_parameters.Nx, global_parameters.Nx) * global_parameters.D_x;
-			
 			flamepos = xflamepos * global_parameters.Nx * global_parameters.D_x;
 			radius = global_parameters.Nx * global_parameters.D_x / 8.0;
 			radial_dist = fabs(xx - flamepos);
 			ref_tanh = 0.5 * (1.0 + tanh(stiffness * (radial_dist - radius) / radius));
-
 			for (unsigned int Y = 0; Y < MPI_parallel->dev_end[1]; ++Y) {
 				for (unsigned int Z = 0; Z < MPI_parallel->dev_end[2]; ++Z) {
-					solid_species[{X, Y, Z}] = -1;  // Mark as solid
-					std::vector<double> Y_temp(Nb);
-					double test_one = 0.0;
-					// Calculate and normalize mass fractions
+					std::vector<double> temp_composition(Nb);
+					// Calculate composition based on the selected method
 					for (unsigned int j = 0; j < Nb; ++j) {
-						Y_k[{X, Y, Z, j}] = composition_in[j] * (1.0 - ref_tanh) + composition_out[j] * ref_tanh;
-						test_one += Y_k[{X, Y, Z, j}];
-						diffusion_coefficient[{X, Y, Z, j}] = 1e-5;
+						temp_composition[j] = composition_in[j] * (1.0 - ref_tanh) + composition_out[j] * ref_tanh;
+						diffusion_coefficient[{X, Y, Z, j}] = 1e-5;  // in m^2/s
 					}
-					for (unsigned int j = 0; j < Nb; ++j) {
-						Y_k[{X, Y, Z, j}] /= test_one;
-						Y_temp[j] = Y_k[{X, Y, Z, j}];  // Store normalized mass fractions for Cantera
-					}
-					double T_in = ini_temp;
-					double P = Flow->p_th_0;
+					double T_in = ini_temp;   // in K
+					double P = Flow->p_th_0;  // in Pa
 #if defined compressible
 					P = Flow->density[{X, Y, Z}] * Flow->rho_0 * R_GAS * T_in / (molar_mass_av[{X, Y, Z}]);
 #endif
-					thermo_chemistry->sol->thermo()->setState_TPY(T_in, P, Y_temp.data());
-					thermo_chemistry->sol->thermo()->equilibrate("HP");
-					// Mass fractions initialization
-					std::vector<double> massf_cantera(Nb);
-					thermo_chemistry->sol->thermo()->getMassFractions(massf_cantera.data());
-					for (unsigned int j = 0; j < Nb; ++j) {
-						Y_k[{X, Y, Z, j}] = massf_cantera[j];
+					if (is_reactive) {
+						if (fraction_type == 'X') {
+							// Set state using mole fractions
+							thermo_chemistry->sol->thermo()->setState_TPX(T_in, P, temp_composition.data());
+							thermo_chemistry->sol->thermo()->equilibrate("HP");
+							// Get the resulting mole fractions and convert to mass fractions
+							std::vector<double> molef_cantera(Nb);
+							thermo_chemistry->sol->thermo()->getMoleFractions(molef_cantera.data());
+							double mean_molecular_weight = thermo_chemistry->sol->thermo()->meanMolecularWeight() * 1e-3;
+
+							for (unsigned int j = 0; j < Nb; ++j) {
+								double species_molecular_weight = thermo_chemistry->sol->thermo()->molecularWeight(j) * 1e-3;
+								Y_k[{X, Y, Z, j}] = molef_cantera[j] * species_molecular_weight / mean_molecular_weight;
+							}
+						} else {
+							// Set state using mass fractions directly
+							thermo_chemistry->sol->thermo()->setState_TPY(T_in, P, temp_composition.data());
+							thermo_chemistry->sol->thermo()->equilibrate("HP");
+
+							// Get the resulting mass fractions directly
+							std::vector<double> massf_cantera(Nb);
+							thermo_chemistry->sol->thermo()->getMassFractions(massf_cantera.data());
+							for (unsigned int j = 0; j < Nb; ++j) {
+								Y_k[{X, Y, Z, j}] = massf_cantera[j];
+							}
+						}
+						// Store other thermodynamic properties
+						molar_mass_av[{X, Y, Z}] = thermo_chemistry->sol->thermo()->meanMolecularWeight() * 1e-3;  // kg/mol
+						T_eq = thermo_chemistry->sol->thermo()->temperature();
+						Thermal->temperature[{X, Y, Z}] = T_eq;
+						Thermal->c_p[{X, Y, Z}] = thermo_chemistry->sol->thermo()->cp_mass();                                           // J/kg-K
+						Thermal->thermal_diffusion_coefficient[{X, Y, Z}] = thermo_chemistry->sol->transport()->thermalConductivity();  // W/m-K
+					} else {
+						// Non-reactive case: Directly normalize the input mass fractions
+						if (fraction_type == 'X') {
+							// Set state using mole fractions
+							thermo_chemistry->sol->thermo()->setState_TPX(T_in, P, temp_composition.data());
+							thermo_chemistry->sol->thermo()->equilibrate("HP");
+							double total_molecular_weight = 0.0;
+							std::vector<double> mass_fractions(Nb, 0.0);
+							// Calculate the total molecular weight
+							for (unsigned int j = 0; j < Nb; ++j) {
+								total_molecular_weight += temp_composition[j] * Molar_mass[j];  // Mol_weight = Mole_fraction * Molar_mass
+							}
+							// Compute mass fractions
+							if (total_molecular_weight != 0.0) {
+								for (unsigned int j = 0; j < Nb; ++j) {
+									mass_fractions[j] = (temp_composition[j] * Molar_mass[j]) / total_molecular_weight;  // Mass_fraction = Mol_weight / Total_Mol_weight
+								}
+							}
+							// Assign mass fractions to Y_k
+							for (unsigned int j = 0; j < Nb; ++j) {
+								Y_k[{X, Y, Z, j}] = mass_fractions[j];
+							}
+							// Calculate the average molar mass (for completeness, if needed later)
+							molar_mass_av[{X, Y, Z}] = total_molecular_weight;
+						} else {  // Else case: Normalize using mass fractions
+							double total_mass_fraction = 0.0;
+							molar_mass_av[{X, Y, Z}] = 0;
+							// Set state using mass fractions directly
+							thermo_chemistry->sol->thermo()->setState_TPY(T_in, P, temp_composition.data());
+							thermo_chemistry->sol->thermo()->equilibrate("HP");
+							// Compute inverse of total molar mass
+							for (unsigned int j = 0; j < Nb; ++j) {
+								Y_k[{X, Y, Z, j}] = temp_composition[j];
+							}
+							// Sum the mass fractions
+							for (unsigned int j = 0; j < Nb; ++j) {
+								total_mass_fraction += Y_k[{X, Y, Z, j}];
+							}
+							// Normalize the mass fractions
+							for (unsigned int j = 0; j < Nb; ++j) {
+								Y_k[{X, Y, Z, j}] /= total_mass_fraction;
+								molar_mass_av[{X, Y, Z}] += Y_k[{X, Y, Z, j}] / Molar_mass[j];
+							}
+						}
+						T_eq = thermo_chemistry->sol->thermo()->temperature();
+						Thermal->temperature[{X, Y, Z}] = T_eq;
+						Thermal->c_p[{X, Y, Z}] = 1.0;                              // Placeholder value for specific heat capacity (J/kg-K)
+						Thermal->thermal_diffusion_coefficient[{X, Y, Z}] = 0.005;  // Placeholder value for thermal conductivity (W/m-K)
 					}
-					molar_mass_av[{X, Y, Z}] = thermo_chemistry->sol->thermo()->meanMolecularWeight() * 1e-3;
-					double T_eq = thermo_chemistry->sol->thermo()->temperature();
-					Thermal->temperature[{X, Y, Z}] = T_eq;
-					Thermal->c_p[{X, Y, Z}] = thermo_chemistry->sol->thermo()->cp_mass();
-					Thermal->thermal_diffusion_coefficient[{X, Y, Z}] = thermo_chemistry->sol->transport()->thermalConductivity();
 					solid[{X, Y, Z}] = -1;
 					V_c[{X, Y, Z, 0}] = 0;
 					V_c[{X, Y, Z, 1}] = 0;
@@ -4420,13 +4479,28 @@ void Species_solver::initialize_field_FD_TGV_reactive(Vector_field& Y_k, Vector_
 			}
 		}
 		if (MPI_parallel->processor_id == (MASTER + 1)) {
-			std::cout << "SPECIES and THERMAL: reacting TGV-3D initial conditions \n";
-			std::cout << "================================ \n";
+			if (is_reactive) {
+				std::cout << "SPECIES and THERMAL: reacting TGV-3D initial conditions \n";
+				std::cout << "================================ \n";
+			} else {
+				std::cout << "SPECIES and THERMAL: non-reacting TGV-3D initial conditions \n";
+				std::cout << "================================ \n";
+			}
 			std::cout << "Stiffness: " << stiffness << std::endl;
 			std::cout << "Radius: " << radius << std::endl;
 			std::cout << "Flame Position: " << xflamepos << " which is: " << flamepos << " m " << std::endl;
 			std::cout << "Initial Temperature: " << ini_temp << std::endl;
-			std::cout << "The equation used for the initial profile is: Yk = Yk1*(1-tanh) + Yk2*tanh \n";
+			if (fraction_type == 'X') {
+				std::cout << "Fraction Type: Mole Fraction (X) \n";
+			} else {
+				std::cout << "Fraction Type: Mass Fraction (Y) \n";
+			}
+			std::cout << "The equation used for the initial profile is: ";
+			if (fraction_type == 'X') {
+				std::cout << "Xk = Xk1*(1-tanh) + Xk2*tanh \n";
+			} else {
+				std::cout << "Yk = Yk1*(1-tanh) + Yk2*tanh \n";
+			}
 			std::cout << "Where tanh = 0.5 * (1 + tanh(stiffness2 * (radial_dist - radius) / radius)) \n";
 			std::cout << "================================ \n";
 		}

@@ -310,9 +310,9 @@ void Fluid_read_write::get_sim_data(Geometry* Geo, stl_import* Geo_stl, std::str
 	L0 = 0.001; //1mm
 	L = (2. * M_PI * L0);
 	global_parameters.D_x = 0.0;
-	global_parameters.D_x = L / (global_parameters.Nx - 1);
+	global_parameters.D_x = L / (global_parameters.Nx);
 	global_parameters.D_t = (CFL_number * global_parameters.D_x) / ini_velocity;
-	double length_domain = global_parameters.D_x * (global_parameters.Nx - 1);
+	double length_domain = global_parameters.D_x * (global_parameters.Nx);
 	// Calculate the number of grid points based on dx and lengths
 	int Nx_full = round(Lx / global_parameters.D_x);
 	int Ny_full = round(Ly / global_parameters.D_x);

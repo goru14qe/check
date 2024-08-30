@@ -3474,17 +3474,17 @@ void Flow_solver::BC(int time, Thermal_solver* Thermal, Species_solver* Species,
 					for (Z = 0; Z < MPI_parallel->dev_end[2]; Z++) {
 						zz = fmod(Z - MPI_parallel->start_XYZ2[2] + MPI_parallel->start_XYZ[2] + N_z, N_z);
 						// Use double instead of int to preserve the fractional part
-						double adjusted_x = xx / ((N_x - 1) *global_parameters.D_x);
-						double adjusted_y = yy / ((N_y - 1) *global_parameters.D_x);
-						double adjusted_z = zz / ((N_z - 1) *global_parameters.D_x);
+						double adjusted_x = (xx) / (double) (N_x);
+						double adjusted_y = (yy) / (double) (N_y);
+						double adjusted_z = (zz) / (double) (N_z);
 						
-						u[{X, Y, Z, 0}] = Ini_vel[0] * sin(2. * M_PI * xx / (double)(N_x + 1.)) * cos(2. * M_PI * yy / (double)(N_y + 1.)) * cos(2. * M_PI * zz / (double)(N_z + 1.));
-						u[{X, Y, Z, 1}] = -Ini_vel[1] * cos(2. * M_PI * xx / (double)(N_x + 1.)) * sin(2. * M_PI * yy / (double)(N_y + 1.)) * cos(2. * M_PI * zz / (double)(N_z + 1.));
+						u[{X, Y, Z, 0}] = Ini_vel[0] * sin(2. * M_PI * adjusted_x) * cos(2. * M_PI * adjusted_y) * cos(2. * M_PI * adjusted_z);
+						u[{X, Y, Z, 1}] = -Ini_vel[1] * cos(2. * M_PI * adjusted_x) * sin(2. * M_PI * adjusted_y) * cos(2. * M_PI * adjusted_z);
 						u[{X, Y, Z, 2}] = 0.;
 						force[{X, Y, Z, 0}] = 0;
 						force[{X, Y, Z, 1}] = 0;
 						force[{X, Y, Z, 2}] = 0;
-						dens[{X, Y, Z}] = Ini_density * (1. / c_s2) + Ini_density * (sqr(Ini_vel[0]) / 16.) * (cos(4 * M_PI * yy / (double)(N_y + 1.)) + cos(4 * M_PI * xx / (double)(N_x + 1.))) * (cos(4 * M_PI * zz / (double)(N_z + 1.)) + 2.);
+						dens[{X, Y, Z}] = Ini_density * (1. / c_s2) + Ini_density * (sqr(Ini_vel[0]) / 16.) * (cos(4 * M_PI * adjusted_y) + cos(4 * M_PI * adjusted_x)) * (cos(4 * M_PI * adjusted_z) + 2.);
 						solid[{X, Y, Z}] = -1;
 					}
 				}
